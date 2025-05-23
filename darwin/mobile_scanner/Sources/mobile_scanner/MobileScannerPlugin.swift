@@ -413,6 +413,10 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                 message: error.localizedDescription, details: nil))
             return
         }
+
+        // ADD THIS FOCUS CONFIGURATION HERE
+        configureOptimalFocusForQR()
+
         captureSession!.sessionPreset = AVCaptureSession.Preset.photo
 
         // Add video output
@@ -518,6 +522,51 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             // Do nothing.
         }
     }
+
+    // Add this method to configure optimal focus for QR scanning
+    private func configureOptimalFocusForQR() {
+        guard let device = device else { return }
+        
+        do {
+            try device.lockForConfiguration()
+            
+            // Set continuous auto focus for best QR scanning
+            if device.isFocusModeSupported(.continuousAutoFocus) {
+                device.focusMode = .continuousAutoFocus
+            } else if device.isFocusModeSupported(.autoFocus) {
+                device.focusMode = .autoFocus
+            }
+            
+            // Enable smooth auto focus for better scanning experience
+            if device.isSmoothAutoFocusSupported {
+                device.isSmoothAutoFocusEnabled = true
+            }
+            
+            // Set center focus point for QR codes
+            if device.isFocusPointOfInterestSupported {
+                device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+            }
+            
+            // Optimize for close-up scanning
+            if device.isAutoFocusRangeRestrictionSupported {
+                device.autoFocusRangeRestriction = .near
+            }
+            
+            // Configure exposure for QR codes
+            if device.isExposureModeSupported(.continuousAutoExposure) {
+                device.exposureMode = .continuousAutoExposure
+            }
+            
+            if device.isExposurePointOfInterestSupported {
+                device.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5)
+            }
+            
+            device.unlockForConfiguration()
+        } catch {
+            
+        }
+    }
+
 
     /// Sets the zoomScale.
     private func setScale(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
